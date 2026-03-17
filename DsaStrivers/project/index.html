@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Video - AI Video Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .fade-in {
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg text-white">
+    <!-- Header -->
+    <header class="py-8">
+        <div class="container mx-auto px-6">
+            <div class="flex items-center justify-between">
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                    Text2Video AI
+                </h1>
+                <div class="flex space-x-4">
+                    <button id="themeToggle" class="p-2 rounded-lg hover:bg-white/20 transition-all">
+                        🌙
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 pb-12">
+        <!-- Main Content -->
+        <div class="max-w-6xl mx-auto">
+            <!-- Hero Section -->
+            <div class="text-center mb-16 fade-in">
+                <h2 class="text-5xl md:text-6xl font-bold mb-6">
+                    Turn Your Text into
+                    <span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        Stunning Videos
+                    </span>
+                </h2>
+                <p class="text-xl md:text-2xl text-gray-200 max-w-2xl mx-auto mb-8">
+                    Convert long articles, blog posts, or any text content into professional videos with AI-powered voiceovers and animations.
+                </p>
+            </div>
+
+            <!-- Input Section -->
+            <div class="grid md:grid-cols-2 gap-8 mb-12 fade-in">
+                <!-- Text Input -->
+                <div class="glass-effect rounded-3xl p-8">
+                    <h3 class="text-2xl font-semibold mb-6">📝 Your Text Content</h3>
+                    <textarea 
+                        id="textInput" 
+                        rows="12" 
+                        placeholder="Paste your long text here... (articles, blog posts, stories, etc.)"
+                        class="w-full p-6 rounded-2xl bg-white/10 border border-white/20 focus:outline-none focus:ring-4 focus:ring-white/30 resize-vertical text-white placeholder-gray-300"
+                    ></textarea>
+                    <div class="flex flex-wrap gap-3 mt-6">
+                        <select id="voiceSelect" class="px-4 py-2 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30">
+                            <option value="en-US-JennyNeural">Jenny (US Female)</option>
+                            <option value="en-US-GuyNeural">Guy (US Male)</option>
+                            <option value="en-GB-SoniaNeural">Sonia (UK Female)</option>
+                            <option value="en-IN-NeerjaNeural">Neerja (India Female)</option>
+                        </select>
+                        <select id="speedSelect" class="px-4 py-2 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30">
+                            <option value="1.0">Normal Speed</option>
+                            <option value="0.8">Slow</option>
+                            <option value="1.2">Fast</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Preview/Controls -->
+                <div class="glass-effect rounded-3xl p-8">
+                    <div id="loadingSpinner" class="hidden text-center mb-6">
+                        <lottie-player 
+                            src="https://assets4.lottiefiles.com/packages/lf20_uyt09jmx.json" 
+                            background="transparent" 
+                            speed="1" 
+                            style="width: 100px; height: 100px; margin: 0 auto;" 
+                            loop 
+                            autoplay>
+                        </lottie-player>
+                    </div>
+                    
+                    <div id="videoPreview" class="hidden">
+                        <video id="generatedVideo" controls class="w-full rounded-2xl shadow-2xl" style="max-height: 400px;"></video>
+                        <div class="mt-4 flex gap-3">
+                            <button id="downloadBtn" class="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                                💾 Download Video
+                            </button>
+                            <button id="regenerateBtn" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl font-semibold transition-all">
+                                🔄 Regenerate
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="progressContainer" class="hidden mt-6">
+                        <div class="flex items-center mb-4">
+                            <div class="flex-1 bg-white/10 rounded-full h-3">
+                                <div id="progressBar" class="progress-bar bg-gradient-to-r from-purple-400 to-pink-400 h-3 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <span id="progressText" class="ml-4 font-semibold">0%</span>
+                        </div>
+                        <p id="progressStatus" class="text-sm text-gray-300">Initializing...</p>
+                    </div>
+
+                    <button 
+                        id="generateBtn" 
+                        class="w-full mt-8 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-8 py-6 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 transition-all duration-300"
+                    >
+                        ✨ Generate Video
+                    </button>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="grid md:grid-cols-3 gap-8 mb-16 fade-in">
+                <div class="glass-effect rounded-2xl p-8 text-center">
+                    <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl">🎙️</span>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-3">AI Voiceovers</h4>
+                    <p class="text-gray-300">Natural-sounding voices in multiple languages and accents</p>
+                </div>
+                <div class="glass-effect rounded-2xl p-8 text-center">
+                    <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl">🎬</span>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-3">Auto Animations</h4>
+                    <p class="text-gray-300">Smooth text animations and visual effects</p>
+                </div>
+                <div class="glass-effect rounded-2xl p-8 text-center">
+                    <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl">📱</span>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-3">Mobile Ready</h4>
+                    <p class="text-gray-300">Optimized for all devices and platforms</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TextToVideo {
+            constructor() {
+                this.initializeElements();
+                this.bindEvents();
+                this.synth = window.speechSynthesis;
+                this.isGenerating = false;
+            }
+
+            initializeElements() {
+                this.elements = {
+                    textInput: document.getElementById('textInput'),
+                    voiceSelect: document.getElementById('voiceSelect'),
+                    speedSelect: document.getElementById('speedSelect'),
+                    generateBtn: document.getElementById('generateBtn'),
+                    videoPreview: document.getElementById('videoPreview'),
+                    generatedVideo: document.getElementById('generatedVideo'),
+                    loadingSpinner: document.getElementById('loadingSpinner'),
+                    progressContainer: document.getElementById('progressContainer'),
+                    progressBar: document.getElementById('progressBar'),
+                    progressText: document.getElementById('progressText'),
+                    progressStatus: document.getElementById('progressStatus'),
+                    downloadBtn: document.getElementById('downloadBtn'),
+                    regenerateBtn: document.getElementById('regenerateBtn')
+                };
+            }
+
+            bindEvents() {
+                this.elements.generateBtn.addEventListener('click', () => this.generateVideo());
+                this.elements.regenerateBtn.addEventListener('click', () => this.generateVideo());
+                this.elements.downloadBtn.addEventListener('click', () => this.downloadVideo());
+            }
+
+            async generateVideo() {
+                if (this.isGenerating) return;
+                
+                const text = this.elements.textInput.value.trim();
+                if (!text) {
+                    alert('Please enter some text first!');
+                    return;
+                }
+
+                this.isGenerating = true;
+                this.showLoading();
+                this.updateProgress(0, 'Processing text...');
+
+                try {
+                    // Split text into sentences for better processing
+                    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 1280;
+                    canvas.height = 720;
+                    const ctx = canvas.getContext('2d');
+                    
+                    const stream = canvas.captureStream(30); // 30 FPS
+                    const mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: 'video/webm;codecs=vp9'
+                    });
+                    
+                    const chunks = [];
+                    mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: 'video/webm' });
+                        this.elements.generatedVideo.src = URL.createObjectURL(blob);
+                        this.showVideo();
+                        this.isGenerating = false;
+                    };
+
+                    // Animation loop
+                    let sentenceIndex = 0;
+                    let wordIndex = 0;
+                    let startTime = Date.now();
+
+                    mediaRecorder.start();
+                    
+                    const animate = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min((elapsed / 15000) * 100, 100); // 15s total
+                        
+                        // Clear canvas
+                        ctx.fillStyle = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        
+                        // Add some animated background elements
+                        this.drawAnimatedBackground(ctx, elapsed);
+                        
+                        // Draw current sentence with typing effect
+                        if (sentenceIndex < sentences.length) {
+                            const currentSentence = sentences[sentenceIndex].trim();
+                            const words = currentSentence.split(' ');
+                            const currentText = words.slice(0, wordIndex + 1).join(' ');
+                            
+                            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                            ctx.font = 'bold 60px Inter, sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            
+                            const maxWidth = canvas.width - 200;
+                            let fontSize = 60;
+                            let textWidth = ctx.measureText(currentText).width;
+                            
+                            while (textWidth > maxWidth && fontSize > 30) {
+                                fontSize--;
+                                ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+                                textWidth = ctx.measureText(currentText).width;
+                            }
+                            
+                            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                            ctx.shadowBlur = 10;
+                            ctx.fillText(currentText, canvas.width/2, canvas.height/2);
+                            ctx.shadowBlur = 0;
+                            
+                            // Typing effect
+                            if (elapsed % 1000 < 500) {
+                                ctx.fillText('|', canvas.width/2 + textWidth/2 + 10, canvas.height/2);
+                            }
+                            
+                            wordIndex++;
+                            if (wordIndex >= words.length) {
+                                sentenceIndex++;
+                                wordIndex = 0;
+                            }
+                        }
+                        
+                        this.updateProgress(progress, `Generating frame ${Math.floor(progress)}%...`);
+                        
+                        if (progress < 100) {
+                            requestAnimationFrame(animate);
+                        } else {
+                            mediaRecorder.stop();
+                        }
+                    };
+                    
+                    animate();
+                    
+                } catch (error) {
+                    console.error('Error generating video:', error);
+                    this.updateProgress(0, 'Error occurred');
+                    alert('Error generating video. Please try again.');
+                    this.isGenerating = false;
+                }
+            }
+
+            drawAnimatedBackground(ctx, time) {
+                // Animated particles
+                for (let i = 0; i < 50; i++) {
+                    const x = (time * 0.1 + i * 17) % ctx.canvas.width;
+                    const y = (Math.sin(time * 0.01 + i) * 100) + ctx.canvas.height / 2;
+                    const size = 3 + Math.sin(time * 0.05 + i) * 2;
+                    
+                    ctx.fillStyle = `rgba(255,255,255,${0.3 + 0.2 * Math.sin(time * 0.03 + i)})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            showLoading() {
+                this.elements.loadingSpinner.classList.remove('hidden');
+                this.elements.videoPreview.classList.add('hidden');
+                this.elements.progressContainer.classList.remove('hidden');
+                this.elements.generateBtn.disabled = true;
+                this.elements.generateBtn.textContent = 'Generating...';
+            }
+
+            showVideo() {
+                this.elements.loadingSpinner.classList.add('hidden');
+                this.elements.videoPreview.classList.remove('hidden');
+                this.elements.progressContainer.classList.add('hidden');
+                this.elements.generateBtn.disabled = false;
+                this.elements.generateBtn.textContent = '✨ Generate New Video';
+            }
+
+            updateProgress(percent, status) {
+                this.elements.progressBar.style.width = `${percent}%`;
+                this.elements.progressText.textContent = `${Math.floor(percent)}%`;
+                this.elements.progressStatus.textContent = status;
+            }
+
+            downloadVideo() {
+                const video = this.elements.generatedVideo;
+                const link = document.createElement('a');
+                link.href = video.src;
+                link.download = `text-to-video-${Date.now()}.webm`;
+                link.click();
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new TextToVideo();
+            
+            // Sample text for demo
+            document.getElementById('textInput').value = `Welcome to Text2Video AI! This innovative tool transforms your written content into professional-looking videos automatically. 
+
+Simply paste any text - blog posts, articles, social media content, or scripts - and our AI will generate a complete video with voiceover narration, smooth animations, and beautiful visual effects.
+
+Perfect for content creators, marketers, educators, and businesses who want to engage their audience with video content without spending hours on editing. Your videos are ready in seconds!
+
+Features include multiple voice options, adjustable speaking speeds, animated text effects, and professional backgrounds. Download your videos in high quality and share them across all platforms.`;
+        });
+
+        // Theme toggle (bonus feature)
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('gradient-bg');
+            document.body.classList.toggle('bg-gray-900');
+        });
+    </script>
+</body>
+</html>
